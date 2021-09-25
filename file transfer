@@ -1,0 +1,49 @@
+
+import socketserver as socket,http.server
+from PIL import  Image 
+import qrcode, subprocess
+import webbrowser
+
+PORT = 8000
+def wlan_ip():
+    
+    # replace wireless1 with wireless2 incase this code does not work
+    wireless1="wireless"
+    wireless2="wireless lan adapter wi-fi"
+    result=subprocess.run('ipconfig',stdout=subprocess.PIPE,text=True).stdout.lower()
+    scan=0
+    for i in result.split('\n'):
+        if wireless2 in i: scan=1
+        if scan:
+            # take the ipv4 address from Wireless LAN adapter Wi-Fi:
+            if 'ipv4' in i: return i.split(':')[1].strip()
+
+        # print(i) # print ipconfig in the terminal
+
+# print(wlan_ip()) #usually 192.168.0.(DHCP assigned ip)
+ip = wlan_ip()
+converted_ip = str(ip)
+
+# combine ip address with port and convert into link
+link = "http://"+converted_ip+":"+str(PORT)+"/"
+
+# convert link to qrcode
+img = qrcode.make(str(link))
+x = 'qrcode_test.png'
+img.save(x)
+
+# open the qrcode image
+img = Image.open(x) 
+img.show()
+print(link)
+
+# chromedir= 'C:/Program Files/Google/Chrome/Application/chrome.exe %s'
+# webbrowser.get(chromedir).open(link)  
+
+# create server on the pc
+Handler = http.server.SimpleHTTPRequestHandler
+with socket.TCPServer(("", PORT), Handler) as httpd:
+    
+    print("serving at port", PORT)
+    httpd.serve_forever()
+    
